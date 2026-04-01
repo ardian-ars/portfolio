@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ars — Portfolio</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Jost:wght@200;300;400&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --deep: #0a0c1a;
+      --accent: #c8a97e;
+      --soft: rgba(255,255,255,0.55);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--deep);
+      color: #fff;
+      font-family: 'Jost', sans-serif;
+      font-weight: 300;
+      overflow-x: hidden;
+      cursor: none;
+    }
+
+    /* ── CURSOR ── */
+    .cursor-dot {
+      position: fixed;
+      top: 0; left: 0;
+      width: 7px; height: 7px;
+      background: var(--accent);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 9999;
+      transform: translate(-50%, -50%);
+    }
+    .cursor-ring {
+      position: fixed;
+      top: 0; left: 0;
+      width: 36px; height: 36px;
+      border: 1.5px solid rgba(200,169,126,0.55);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 9998;
+      transform: translate(-50%, -50%);
+      transition: width 0.22s ease, height 0.22s ease, border-color 0.22s ease;
+    }
+    .cursor-ring.hovered {
+      width: 54px; height: 54px;
+      border-color: rgba(200,169,126,0.95);
+    }
+    @media (hover: none) {
+      .cursor-dot, .cursor-ring { display: none; }
+      body { cursor: auto; }
+    }
+
+    /* ── PROGRESS BAR ── */
+    .progress-bar {
+      position: fixed;
+      top: 0; left: 0;
+      height: 2px;
+      background: var(--accent);
+      width: 0%;
+      z-index: 300;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding: 1.4rem 3rem;
+      background: linear-gradient(to bottom, rgba(10,12,26,0.65) 0%, transparent 100%);
+      transition: background 0.4s, padding 0.3s;
+    }
+    nav.scrolled {
+      background: rgba(10,12,26,0.93);
+      backdrop-filter: blur(14px);
+      padding: 0.9rem 3rem;
+    }
+    .nav-links { display: flex; gap: 2.5rem; }
+    .nav-links a {
+      font-size: 0.72rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--soft);
+      text-decoration: none;
+      transition: color 0.3s;
+    }
+    .nav-links a:hover { color: var(--accent); }
+
+    /* ── SCROLL HINT OVERLAY ── */
+    .scroll-overlay {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      z-index: 150;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-bottom: 3rem;
+      pointer-events: none;
+      opacity: 1;
+      transition: opacity 0.7s ease;
+    }
+    .scroll-overlay.hidden { opacity: 0; }
+
+    .scroll-label {
+      font-size: 0.58rem;
+      letter-spacing: 0.4em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.4);
+      margin-bottom: 0.8rem;
+    }
+    /* animated vertical line */
+    .scroll-line {
+      width: 1px;
+      height: 0;
+      background: linear-gradient(to bottom, rgba(200,169,126,0.8), transparent);
+      animation: growLine 1.8s ease-in-out infinite;
+    }
+    @keyframes growLine {
+      0%   { height: 0;    opacity: 1; }
+      70%  { height: 48px; opacity: 1; }
+      100% { height: 48px; opacity: 0; }
+    }
+    /* chevron arrows */
+    .scroll-chevrons {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      margin-top: 6px;
+    }
+    .chev {
+      width: 8px; height: 8px;
+      border-right: 1.5px solid rgba(200,169,126,0.6);
+      border-bottom: 1.5px solid rgba(200,169,126,0.6);
+      transform: rotate(45deg);
+      animation: chevFade 1.8s ease-in-out infinite;
+    }
+    .chev:nth-child(1) { animation-delay: 0s;    opacity: 0.3; }
+    .chev:nth-child(2) { animation-delay: 0.18s; opacity: 0.6; }
+    .chev:nth-child(3) { animation-delay: 0.36s; opacity: 1;   }
+    @keyframes chevFade {
+      0%, 100% { opacity: 0.15; }
+      50%       { opacity: 1; }
+    }
+
+    /* ── PORTFOLIO IMAGE ── */
+    .portfolio-image-wrap {
+      position: relative;
+      width: 100%;
+    }
+    .portfolio-image-wrap img {
+      width: 100%;
+      display: block;
+    }
+
+    /* slide markers */
+    .slide-marker {
+      position: absolute;
+      right: 2.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      opacity: 0;
+      transform: translateX(16px);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+      pointer-events: none;
+    }
+    .slide-marker.visible { opacity: 1; transform: translateX(0); }
+    .slide-marker-num {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 0.7rem;
+      color: var(--accent);
+      letter-spacing: 0.1em;
+    }
+    .slide-marker-line { width: 28px; height: 1px; background: var(--accent); opacity: 0.4; }
+
+    /* ── FOOTER ── */
+    footer {
+      background: var(--deep);
+      border-top: 1px solid rgba(200,169,126,0.15);
+      padding: 1.6rem 3rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+    .footer-copy {
+      font-size: 0.6rem;
+      color: rgba(255,255,255,0.2);
+      letter-spacing: 0.15em;
+      white-space: nowrap;
+    }
+    .footer-links { display: flex; gap: 0.7rem; flex-wrap: wrap; justify-content: flex-end; }
+    .footer-links a {
+      font-size: 0.63rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.65);
+      text-decoration: none;
+      padding: 0.45rem 1.15rem;
+      border: 1px solid rgba(200,169,126,0.35);
+      border-radius: 2rem;
+      transition: background 0.28s, color 0.28s, border-color 0.28s;
+    }
+    .footer-links a:hover {
+      background: var(--accent);
+      color: #0a0c1a;
+      border-color: var(--accent);
+    }
+
+    /* ── MOBILE ── */
+    @media (max-width: 768px) {
+      nav { padding: 0.9rem 1.25rem; }
+      nav.scrolled { padding: 0.7rem 1.25rem; }
+      .nav-links { gap: 1.4rem; }
+      .nav-links a { font-size: 0.64rem; letter-spacing: 0.14em; }
+
+      .slide-marker { right: 0.6rem; }
+      .slide-marker-num { font-size: 0.58rem; }
+      .slide-marker-line { width: 16px; }
+
+      footer {
+        flex-direction: column;
+        align-items: center;
+        padding: 1.4rem 1.25rem;
+        text-align: center;
+        gap: 0.9rem;
+      }
+      .footer-links { justify-content: center; gap: 0.5rem; }
+      .footer-links a { font-size: 0.58rem; padding: 0.4rem 0.85rem; }
+
+      .scroll-overlay { padding-bottom: 2rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="cursor-dot" id="curDot"></div>
+  <div class="cursor-ring" id="curRing"></div>
+
+  <div class="progress-bar" id="progress"></div>
+
+  <!-- Scroll hint overlay -->
+  <div class="scroll-overlay" id="scrollOverlay">
+    <p class="scroll-label">scroll</p>
+    <div class="scroll-line"></div>
+    <div class="scroll-chevrons">
+      <div class="chev"></div>
+      <div class="chev"></div>
+      <div class="chev"></div>
+    </div>
+  </div>
+
+  <!-- Nav -->
+  <nav id="nav">
+    <div class="nav-links">
+      <a href="#portfolio">Portfolio</a>
+      <a href="#contact">Contact</a>
+    </div>
+  </nav>
+
+  <!-- Portfolio image -->
+  <section id="portfolio">
+    <div class="portfolio-image-wrap">
+      <img src="Ars_Portfolio_copy.jpg" alt="Ars Portfolio" />
+      <div class="slide-marker" style="top:5%"><span class="slide-marker-num">01</span><span class="slide-marker-line"></span></div>
+      <div class="slide-marker" style="top:15%"><span class="slide-marker-num">02</span><span class="slide-marker-line"></span></div>
+      <div class="slide-marker" style="top:25%"><span class="slide-marker-num">03</span><span class="slide-marker-line"></span></div>
+      <div class="slide-marker" style="top:35%"><span class="slide-marker-num">04</span><span class="slide-marker-line"></span></div>
+      <div class="slide-marker" style="top:45%"><span class="slide-marker-num">05</span><span class="slide-marker-line"></span></div>
+      <div class="slide-marker" style="top:55%"><span class="slide-marker-num">06</span><span class="slide-marker-line"></span></div>
+      <div class="slide-marker" style="top:65%"><span class="slide-marker-num">07</span><span class="slide-marker-line"></span></div>
+      <div class="slide-marker" style="top:75%"><span class="slide-marker-num">08</span><span class="slide-marker-line"></span></div>
+      <div class="slide-marker" style="top:85%"><span class="slide-marker-num">09</span><span class="slide-marker-line"></span></div>
+      <div class="slide-marker" style="top:95%"><span class="slide-marker-num">10</span><span class="slide-marker-line"></span></div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer id="contact">
+    <p class="footer-copy">&copy; 2025 Ars. All rights reserved.</p>
+    <div class="footer-links">
+      <a href="mailto:your@email.com">Email</a>
+      <a href="https://instagram.com/" target="_blank">Instagram</a>
+      <a href="https://linkedin.com/" target="_blank">LinkedIn</a>
+    </div>
+  </footer>
+
+  <script>
+    const isTouch = window.matchMedia('(hover: none)').matches;
+    const curDot  = document.getElementById('curDot');
+    const curRing = document.getElementById('curRing');
+
+    if (!isTouch) {
+      let mx = 0, my = 0, rx = 0, ry = 0;
+
+      document.addEventListener('mousemove', e => {
+        mx = e.clientX; my = e.clientY;
+        curDot.style.left = mx + 'px';
+        curDot.style.top  = my + 'px';
+      });
+
+      (function ring() {
+        rx += (mx - rx) * 0.11;
+        ry += (my - ry) * 0.11;
+        curRing.style.left = rx + 'px';
+        curRing.style.top  = ry + 'px';
+        requestAnimationFrame(ring);
+      })();
+
+      document.querySelectorAll('a').forEach(el => {
+        el.addEventListener('mouseenter', () => curRing.classList.add('hovered'));
+        el.addEventListener('mouseleave', () => curRing.classList.remove('hovered'));
+      });
+    }
+
+    const progress      = document.getElementById('progress');
+    const nav           = document.getElementById('nav');
+    const scrollOverlay = document.getElementById('scrollOverlay');
+    const markers       = document.querySelectorAll('.slide-marker');
+    let overlayGone     = false;
+
+    window.addEventListener('scroll', () => {
+      const sy   = window.scrollY;
+      const docH = document.documentElement.scrollHeight - window.innerHeight;
+
+      progress.style.width = (sy / docH * 100) + '%';
+      nav.classList.toggle('scrolled', sy > 50);
+
+      if (sy > 100 && !overlayGone) {
+        scrollOverlay.classList.add('hidden');
+        overlayGone = true;
+      } else if (sy < 20 && overlayGone) {
+        scrollOverlay.classList.remove('hidden');
+        overlayGone = false;
+      }
+
+      markers.forEach(m => {
+        const r = m.getBoundingClientRect();
+        if (r.top < window.innerHeight * 0.8 && r.bottom > 0) m.classList.add('visible');
+      });
+    });
+  </script>
+</body>
+</html>
